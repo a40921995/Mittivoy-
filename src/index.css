@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --brand-sky: #00B8F5;
+    --brand-sky-light: #E5F7FF;
+    --brand-pink: #FF4FA3;
+    --brand-pink-light: #FFE5F2;
+    --brand-yellow: #FFD76A;
+    --brand-purple: #A78BFA;
+    --brand-mint: #9BE7C4;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom smooth scrollbar for horizontal categories & galleries */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom brand gradients */
+.bg-brand-sky-gradient {
+  background: linear-gradient(135deg, #00B8F5 0%, #0096C7 100%);
+}
+.bg-brand-pink-gradient {
+  background: linear-gradient(135deg, #FF4FA3 0%, #F43F5E 100%);
+}
+.bg-brand-promo-gradient {
+  background: linear-gradient(135deg, #00B8F5 0%, #A78BFA 50%, #FF4FA3 100%);
+}
+.bg-brand-pastel {
+  background: linear-gradient(135deg, #E5F7FF 0%, #FFE5F2 50%, #FFF7D6 100%);
+}
+.bg-brand-mint-gradient {
+  background: linear-gradient(135deg, #9BE7C4 0%, #34D399 100%);
+}
+
+/* Animations */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes popScale {
+  0% { transform: scale(0.9); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes bounceCart {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+  60% { transform: translateY(-2px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-pop {
+  animation: popScale 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-bounce-cart {
+  animation: bounceCart 0.6s ease-out;
+}
+
+/* Glassmorphism helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}

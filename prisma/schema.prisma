@@ -1,0 +1,449 @@
+// MITTIVOY Bolalar Kiyimlari Savdo Tizimi - Prisma Schema
+// Database: PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  CASHIER
+  COURIER
+}
+
+enum Gender {
+  BOYS
+  GIRLS
+  UNISEX
+}
+
+enum AgeGroup {
+  AGE_1_3
+  AGE_4_6
+  AGE_7_9
+  AGE_10_12
+  AGE_13_15
+}
+
+enum OrderStatus {
+  YANGI
+  TOLOV_KUTILMOQDA
+  TOLOV_TEKSHIRILMOQDA
+  TASDIQLANGAN
+  TAYYORLANMOQDA
+  YETKAZILMOQDA
+  YETKAZILGAN
+  BEKOR_QILINGAN
+}
+
+enum PaymentMethod {
+  CLICK
+  PAYNET
+  TERMINAL_POS
+}
+
+enum PaymentStatus {
+  KUTILMOQDA
+  TEKSHIRILMOQDA
+  TASDIQLANDI
+  RAD_ETILDI
+}
+
+enum MovementType {
+  KIRIM
+  SOTUV_ONLAYN
+  SOTUV_OFLAYN
+  QAYTARISH
+  TUZATISH
+}
+
+// 1. Users
+model User {
+  id             String         @id @default(uuid())
+  phone          String         @unique
+  fullName       String
+  role           Role           @default(CUSTOMER)
+  passwordHash   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  addresses      UserAddress[]
+  orders         Order[]
+  carts          Cart[]
+  favorites      Favorite[]
+  reviews        Review[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+// 2. UserAddresses
+model UserAddress {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  region         String
+  district       String
+  streetAddress  String
+  isDefault      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  @@map("user_addresses")
+}
+
+// 3. Products
+model Product {
+  id             String           @id @default(uuid())
+  code           String           @unique
+  name           String
+  description    String
+  categoryId     String
+  category       Category         @relation(fields: [categoryId], references: [id])
+  gender         Gender           @default(UNISEX)
+  ageGroup       AgeGroup
+  costPrice      Decimal          @db.Decimal(12, 2)
+  sellingPrice   Decimal          @db.Decimal(12, 2)
+  discountPrice  Decimal?         @db.Decimal(12, 2)
+  fabric         String?
+  rating         Decimal          @default(5.0) @db.Decimal(3, 1)
+  reviewCount    Int              @default(0)
+  isNewArrival   Boolean          @default(true)
+  isBestseller   Boolean          @default(false)
+  isRecommended  Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  images         ProductImage[]
+  variants       ProductVariant[]
+  reviews        Review[]
+  favorites      Favorite[]
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  sizeCharts     SizeChart[]
+
+  @@map("products")
+}
+
+// 4. ProductImages
+model ProductImage {
+  id             String         @id @default(uuid())
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  imageUrl       String
+  isPrimary      Boolean        @default(false)
+  sortOrder      Int            @default(0)
+
+  @@map("product_images")
+}
+
+// 5. Categories
+model Category {
+  id             String         @id @default(uuid())
+  name           String         @unique
+  iconName       String?
+  imageUrl       String?
+  gender         Gender         @default(UNISEX)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  products       Product[]
+
+  @@map("categories")
+}
+
+// 6. ProductVariants
+model ProductVariant {
+  id             String         @id @default(uuid())
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color          String
+  colorHex       String
+  size           String
+  barcode        String?        @unique
+  stock          Int            @default(0)
+  soldCount      Int            @default(0)
+
+  inventory      Inventory?
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+
+  @@unique([productId, color, size])
+  @@map("product_variants")
+}
+
+// 7. SizeCharts
+model SizeChart {
+  id             String         @id @default(uuid())
+  productId      String?
+  product        Product?       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ageYears       Int
+  heightMinCm    Int
+  heightMaxCm    Int
+  weightMinKg    Int
+  weightMaxKg    Int
+  recommendedSize String
+  chestCm        Int?
+  waistCm        Int?
+
+  @@map("size_charts")
+}
+
+// 8. Inventory
+model Inventory {
+  id             String         @id @default(uuid())
+  variantId      String         @unique
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  warehouseCode  String         @default("WH-CENTRAL")
+  currentStock   Int            @default(0)
+  safetyStock    Int            @default(3)
+  updatedAt      DateTime       @updatedAt
+
+  @@map("inventory")
+}
+
+// 9. InventoryMovements
+model InventoryMovement {
+  id             String         @id @default(uuid())
+  productCode    String
+  productName    String
+  variantInfo    String
+  type           MovementType
+  quantityChange Int
+  remainingStock Int
+  note           String?
+  performedBy    String
+  createdAt      DateTime       @default(now())
+
+  @@map("inventory_movements")
+}
+
+// 10. Carts
+model Cart {
+  id             String         @id @default(uuid())
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  items          CartItem[]
+
+  @@map("carts")
+}
+
+// 11. CartItems
+model CartItem {
+  id             String         @id @default(uuid())
+  cartId         String
+  cart           Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity       Int            @default(1)
+  unitPrice      Decimal        @db.Decimal(12, 2)
+
+  @@map("cart_items")
+}
+
+// 12. Favorites
+model Favorite {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now())
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+// 13. Orders
+model Order {
+  id                   String         @id @default(uuid())
+  orderNumber          String         @unique
+  userId               String?
+  user                 User?          @relation(fields: [userId], references: [id])
+  customerName         String
+  customerPhone        String
+  region               String
+  district             String
+  address              String
+  notes                String?
+  subtotal             Decimal        @db.Decimal(12, 2)
+  deliveryFee          Decimal        @default(0) @db.Decimal(12, 2)
+  discount             Decimal        @default(0) @db.Decimal(12, 2)
+  totalAmount          Decimal        @db.Decimal(12, 2)
+  totalCost            Decimal        @db.Decimal(12, 2)
+  status               OrderStatus    @default(YANGI)
+  paymentMethod        PaymentMethod
+  paymentStatus        PaymentStatus  @default(KUTILMOQDA)
+  paymentReceiptUrl    String?
+  paymentTransactionId String?
+  paymentNote          String?
+  isOnline             Boolean        @default(true)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  items                OrderItem[]
+  payments             Payment[]
+
+  @@map("orders")
+}
+
+// 14. OrderItems
+model OrderItem {
+  id             String         @id @default(uuid())
+  orderId        String
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product        @relation(fields: [productId], references: [id])
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id])
+  productName    String
+  productCode    String
+  color          String
+  size           String
+  quantity       Int
+  unitPrice      Decimal        @db.Decimal(12, 2)
+  totalPrice     Decimal        @db.Decimal(12, 2)
+  costPrice      Decimal        @db.Decimal(12, 2)
+
+  @@map("order_items")
+}
+
+// 15. Payments
+model Payment {
+  id             String         @id @default(uuid())
+  orderId        String
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method         PaymentMethod
+  amount         Decimal        @db.Decimal(12, 2)
+  status         PaymentStatus  @default(KUTILMOQDA)
+  transactionId  String?
+  receiptUrl     String?
+  verifiedBy     String?
+  verifiedAt     DateTime?
+  createdAt      DateTime       @default(now())
+
+  @@map("payments")
+}
+
+// 16. Reviews
+model Review {
+  id                 String         @id @default(uuid())
+  productId          String
+  product            Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?          @relation(fields: [userId], references: [id])
+  userName           String
+  userPhoneMasked    String
+  rating             Int
+  comment            String
+  photoUrl           String?
+  isVerifiedPurchase Boolean        @default(false)
+  approved           Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+
+  @@map("reviews")
+}
+
+// 17. Expenses
+model Expense {
+  id             String         @id @default(uuid())
+  title          String
+  amount         Decimal        @db.Decimal(12, 2)
+  date           DateTime
+  category       String
+  note           String?
+  createdAt      DateTime       @default(now())
+
+  @@map("expenses")
+}
+
+// 18. OfflineSales (POS)
+model OfflineSale {
+  id             String         @id @default(uuid())
+  receiptNumber  String         @unique
+  cashierName    String
+  customerName   String?
+  customerPhone  String?
+  subtotal       Decimal        @db.Decimal(12, 2)
+  discount       Decimal        @default(0) @db.Decimal(12, 2)
+  totalAmount    Decimal        @db.Decimal(12, 2)
+  totalCost      Decimal        @db.Decimal(12, 2)
+  paymentMethod  PaymentMethod
+  synced         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+
+  @@map("offline_sales")
+}
+
+// 19. Notifications
+model Notification {
+  id             String         @id @default(uuid())
+  title          String
+  message        String
+  type           String
+  targetUrl      String?
+  isRead         Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  @@map("notifications")
+}
+
+// 20. Banners
+model Banner {
+  id             String         @id @default(uuid())
+  title          String
+  subtitle       String
+  tag            String
+  imageUrl       String
+  linkCategory   String?
+  isActive       Boolean        @default(true)
+  order          Int            @default(0)
+  createdAt      DateTime       @default(now())
+
+  @@map("banners")
+}
+
+// 21. AdminSettings
+model AdminSetting {
+  id                    String      @id @default("default")
+  storeName             String
+  storePhone            String
+  storeAddress          String
+  currency              String      @default("UZS")
+  lowStockThreshold     Int         @default(4)
+  clickMerchantId       String
+  clickServiceId        String?
+  clickCardNumber       String
+  paynetMerchantId      String
+  paynetTerminalId      String?
+  paynetCardNumber      String
+  telegramBotToken      String?
+  telegramChatId        String?
+  adminPinHash          String
+  updatedAt             DateTime    @updatedAt
+
+  @@map("admin_settings")
+}
+
+// 22. AuditLogs
+model AuditLog {
+  id             String         @id @default(uuid())
+  userId         String?
+  user           User?          @relation(fields: [userId], references: [id])
+  action         String
+  entity         String
+  entityId       String?
+  details        String?
+  ipAddress      String?
+  createdAt      DateTime       @default(now())
+
+  @@map("audit_logs")
+}

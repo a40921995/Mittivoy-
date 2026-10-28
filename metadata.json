@@ -1,0 +1,6 @@
+{
+  "name": "MITTIVOY — Professional Mobil Savdo Ilovasi",
+  "description": "Bolalar kiyimlari do'koni uchun zamonaviy mobil savdo ilovasi (1-15 yosh), aqlli o'lcham tanlash, ombor hisobi, Click va Paynet to'lovlari, oflayn POS va professional admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

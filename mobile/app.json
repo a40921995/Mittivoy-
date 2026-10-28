@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "MITTIVOY",
+    "slug": "mittivoy-bolalar-kiyimlari",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E0F2FE"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mittivoy.kidsclothing",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Mahsulot cheklarini va sharhlar uchun suratga olish ruxsati",
+        "NSPhotoLibraryUsageDescription": "To‘lov cheklari skrinshotini yuklash uchun galereyadan foydalanish"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#38BDF8"
+      },
+      "package": "com.mittivoy.kidsclothing",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#38BDF8"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "mittivoy-app-id"
+      }
+    }
+  }
+}
